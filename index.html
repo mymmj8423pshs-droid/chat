@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>한글</title>
+<style>
+  *{box-sizing:border-box;-webkit-text-size-adjust:100%;}
+  html,body{margin:0;height:100%;}
+  body{font-family:"맑은 고딕","Malgun Gothic",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#e9ebee;color:#2b2b2b;}
+  button{cursor:pointer;border:none;background:none;font:inherit;color:inherit;}
+  input,textarea{font:inherit;outline:none;border:none;}
+  #app{height:100vh;height:100dvh;overflow:hidden;}
+  .hwp{height:100%;display:flex;flex-direction:column;background:#e9ebee;}
+
+  .mbar{flex:0 0 auto;display:flex;align-items:center;gap:2px;height:30px;padding:0 8px;background:#f6f7f9;border-bottom:1px solid #e0e3e7;font-size:13px;overflow:hidden;white-space:nowrap;}
+  .mbar .m{padding:5px 9px;color:#3a3d42;border-radius:3px;}
+  .mbar .m:hover{background:#e9edf2;}
+  .mbar .m.act{color:#1a73e8;box-shadow:inset 0 -2px 0 #1a73e8;}
+  .mbar .mfile{font-weight:700;}
+  .mbar .chev{margin-left:auto;color:#9aa0a6;}
+
+  .ribbon{flex:0 0 auto;display:flex;align-items:center;gap:6px;height:42px;padding:0 8px;background:#fbfcfd;border-bottom:1px solid #e3e6ea;overflow:hidden;white-space:nowrap;}
+  .cell{font-size:12px;color:#3a3d42;border:1px solid #e1e4e8;background:#fff;border-radius:3px;padding:5px 9px;}
+  .cell.on{background:#eaeef4;border-color:#c9d2dd;color:#1a1a1a;}
+  .char{font-size:15px;font-weight:700;color:#2b6cb0;display:flex;align-items:flex-end;line-height:1;padding:0 2px;}
+  .char sub{font-size:9px;}
+  .rsep{width:1px;height:22px;background:#e3e6ea;margin:0 3px;flex:0 0 auto;}
+  .ti{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:4px;color:#5a5f66;position:relative;}
+  .ti:hover{background:#eef1f5;}
+  .ti svg{width:16px;height:16px;}
+  .ti .notif{display:none;position:absolute;top:-3px;right:-3px;min-width:15px;height:15px;padding:0 4px;border-radius:8px;background:#e8654b;color:#fff;font-size:9px;font-weight:700;line-height:15px;text-align:center;font-family:"맑은 고딕",sans-serif;}
+  .dd{font-size:12px;color:#3a3d42;border:1px solid #e1e4e8;background:#fff;border-radius:3px;padding:5px 8px;}
+  .dd.wide{min-width:96px;}
+
+  .ruler-h{flex:0 0 auto;display:flex;height:20px;background:#f4f5f7;border-bottom:1px solid #e6e9ed;overflow:hidden;}
+  .ruler-h .corner{width:24px;flex:0 0 auto;border-right:1px solid #e0e3e7;}
+  .ruler-h .pad{width:18px;flex:0 0 auto;}
+  .ruler-h .rk{width:38px;flex:0 0 auto;font-size:9px;color:#aab0b6;border-left:1px solid #d7dbe0;padding-left:2px;line-height:20px;}
+
+  .work{flex:1;min-height:0;display:flex;overflow:hidden;}
+  .ruler-v{width:24px;flex:0 0 auto;background:#f4f5f7;border-right:1px solid #e6e9ed;display:flex;flex-direction:column;align-items:center;font-size:9px;color:#aab0b6;padding-top:24px;gap:26px;overflow:hidden;}
+  .canvas{flex:1;min-height:0;overflow-y:auto;padding:16px 0 80px 0;}
+  .page{width:760px;max-width:calc(100% - 34px);margin-left:18px;background:#fff;box-shadow:0 1px 8px rgba(0,0,0,.16);border:1px solid #e0e0e0;min-height:940px;padding:54px 60px;}
+  @media (max-width:560px){ .page{padding:30px 22px;margin-left:10px;max-width:calc(100% - 20px);} .ruler-v{display:none;} .ruler-h .corner{width:10px;} }
+
+  .doc{font-family:"함초롬바탕","HCR Batang",Batang,"바탕",serif;font-size:16px;color:#1a1a1a;}
+  .doc-head{font-family:"맑은 고딕","Malgun Gothic",sans-serif;font-size:13px;color:#8a8f95;border-bottom:1px solid #eef0f2;padding-bottom:9px;margin-bottom:12px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+  .line{display:flex;align-items:baseline;gap:7px;line-height:2;}
+  .line.mine{cursor:pointer;border-radius:5px;}
+  .line.sel{background:#fdf3f0;}
+  .ln-name{font-weight:700;flex:0 0 auto;}
+  .ln-text{flex:1;word-break:break-word;white-space:pre-wrap;}
+  .ln-time{flex:0 0 auto;color:#bcbcbc;font-size:12px;}
+  .line .del{display:none;flex:0 0 auto;color:#cf6b56;cursor:pointer;font-size:12px;margin-left:4px;}
+  .line.mine:hover .del{display:inline;}
+  .line .del.open{display:inline;}
+  .sysline{font-family:"함초롬바탕",serif;text-align:center;color:#b4b8bd;font-size:13px;margin:12px 0;}
+  .input-line .ln-input{flex:1;border:none;outline:none;background:transparent;resize:none;padding:0;margin:0;color:inherit;font:inherit;line-height:2;overflow:hidden;min-height:32px;}
+  .daterow{color:#b6b6b6;font-size:13px;margin:14px 0 2px;}
+
+  .list-doc .dh{font-weight:700;color:#3a3d42;margin:18px 0 6px;font-size:15px;}
+  .list-doc .dh:first-child{margin-top:0;}
+  .list-doc .dl{line-height:1.95;margin:2px 0;display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+  .list-doc .emo{font-size:15px;}
+  .list-doc .dim{color:#9a9a9a;}
+  .list-doc .row-open{cursor:pointer;border-radius:4px;padding:1px 4px;margin-left:-4px;}
+  .list-doc .row-open:hover{background:#f2f6fc;}
+  .list-doc .unread{flex:0 0 auto;background:#e8654b;color:#fff;font-size:11px;font-weight:700;min-width:18px;height:18px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;padding:0 5px;font-family:"맑은 고딕",sans-serif;}
+  .list-doc b.bold-new{color:#1a1a1a;}
+  .mtag{font-family:"맑은 고딕",sans-serif;font-size:11px;color:#8a8f95;border:1px solid #e1e4e8;border-radius:3px;padding:1px 6px;margin-left:4px;}
+  .mtag.me{color:#1a73e8;border-color:#bcd4f5;background:#eef4fd;}
+  .list-doc .leader{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .list-doc .t{flex:0 0 auto;font-size:12px;}
+  .mini{font-family:"맑은 고딕","Malgun Gothic",sans-serif;font-size:12px;border:1px solid #d2d6db;border-radius:3px;padding:2px 8px;background:#f5f6f8;color:#3a3d42;font-weight:400;}
+  .mini:hover{background:#eef1f5;}
+  .mini.ok{color:#1a7f4b;border-color:#bfe0cd;background:#eef8f1;}
+  .dh .mini{margin-left:8px;}
+
+  #overlay:empty{display:none;}
+  #boss:empty{display:none;}
+  #boss{position:fixed;inset:0;z-index:60;background:#e9ebee;}
+  .blankdoc{width:100%;min-height:840px;border:none;outline:none;resize:none;background:transparent;font-family:"함초롬바탕","HCR Batang",Batang,"바탕",serif;font-size:16px;line-height:2;color:#1a1a1a;padding:0;}
+  .dlg-bg{position:fixed;inset:0;background:rgba(20,22,25,.4);display:flex;align-items:center;justify-content:center;z-index:40;padding:16px;}
+  .dlg{width:100%;max-width:390px;background:#f3f4f6;border:1px solid #b9bec4;border-radius:6px;box-shadow:0 14px 40px rgba(0,0,0,.3);overflow:hidden;font-family:"맑은 고딕","Malgun Gothic",sans-serif;}
+  .dlg-title{background:linear-gradient(#fbfcfd,#eef1f4);border-bottom:1px solid #dfe3e8;padding:11px 14px;font-size:14px;font-weight:700;color:#33373c;display:flex;align-items:center;justify-content:space-between;}
+  .dlg-x{color:#9aa0a6;cursor:pointer;font-size:13px;}
+  .dlg-body{padding:18px 18px 22px;background:#fff;max-height:78vh;overflow-y:auto;}
+
+  .form{display:flex;flex-direction:column;gap:16px;}
+  .form-av-wrap{display:flex;justify-content:center;}
+  .av{border-radius:50%;display:flex;align-items:center;justify-content:center;line-height:1;user-select:none;}
+  .label{font-size:12.5px;font-weight:700;color:#6b7178;margin:0 0 7px 2px;}
+  .opt{font-weight:500;color:#aab0b6;}
+  .field{width:100%;padding:11px 12px;border-radius:6px;border:1px solid #d6dade;background:#fff;font-size:14px;color:#1a1a1a;}
+  .field:focus{border-color:#1a73e8;}
+  .emoji-grid{display:flex;flex-wrap:wrap;gap:6px;}
+  .emoji{width:38px;height:38px;border-radius:8px;font-size:19px;display:flex;align-items:center;justify-content:center;background:#fff;border:1.5px solid #e1e4e8;}
+  .emoji.sel{background:#eaf1fb;border-color:#1a73e8;}
+  .ok-btn{width:100%;padding:13px;border-radius:6px;background:#1a73e8;color:#fff;font-size:15px;font-weight:600;}
+  .ok-btn:disabled{background:#a9c6f3;cursor:default;}
+  .reset-link{align-self:center;color:#b0b4b9;font-size:12.5px;padding:4px;}
+
+  .gp-list{display:flex;flex-direction:column;gap:3px;max-height:220px;overflow-y:auto;border:1px solid #e1e4e8;border-radius:6px;padding:6px;}
+  .gp{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:6px;cursor:pointer;font-size:14px;}
+  .gp:hover{background:#f3f6fb;}
+  .gp.on{background:#eaf1fb;}
+  .gp-emo{font-size:16px;}
+  .gp-check{margin-left:auto;color:#1a73e8;opacity:0;font-weight:700;}
+  .gp.on .gp-check{opacity:1;}
+
+  .setup{font-family:"맑은 고딕","Malgun Gothic",sans-serif;font-size:14px;line-height:1.8;color:#444;}
+  .setup h2{font-size:20px;color:#1a1a1a;margin:0 0 8px;}
+  .setup code{background:#eef1f4;padding:2px 6px;border-radius:5px;font-size:13px;}
+  .setup ol{padding-left:20px;line-height:2;}
+</style>
+</head>
+<body>
+  <div id="app"></div>
+  <div id="overlay"></div>
+  <div id="boss"></div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js';
+import { getDatabase, ref, onValue, set, update, push, remove, increment } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-database.js';
+
+/* ════════════════════════════════════════════════════════════════════════
+   ↓↓↓ databaseURL 한 줄만 채우면 됩니다 (Realtime Database 만들면 URL이 떠요) ↓↓↓
+   ════════════════════════════════════════════════════════════════════════ */
+const firebaseConfig = {
+  apiKey: "AIzaSyCvm-dh3Pz54TQEDsod3D5qql4QwMvlj4U",
+  authDomain: "chat-66ee5.firebaseapp.com",
+  databaseURL: "https://chat-66ee5-default-rtdb.firebaseio.com",
+  projectId: "chat-66ee5",
+  storageBucket: "chat-66ee5.firebasestorage.app",
+  messagingSenderId: "520177599317",
+  appId: "1:520177599317:web:3e2fb1c1ab884ec022e5dc"
+};
+/* ════════════════════════════════════════════════════════════════════════ */
+
+const EMOJIS = ['😀','😎','🐱','🐻','🦊','🐰','🐶','🌱','🍀','🌙','⭐','🍓','🍑','🎧','📚','⚡','👑','🎮','🪴','☕'];
+const PASTELS = ['#F3C9B6','#CCDDC6','#CBD4F0','#F0D9BA','#E8C9E0','#BFE0DC','#E9D3C1','#D5DCC6','#F1C7CE','#C8E1EF'];
+const LS_KEY = 'ieum_me_v1';
+const SYS = '__system__';
+
+const S = { me:null, view:'list', profiles:{}, convs:{}, activeId:null, messages:[], ready:false, delOpen:null, boss:false };
+let db = null, msgUnsub = null, selectedEmoji = '😀', groupSel = new Set(), bossText = '';
+
+/* ------------------------------- utils ------------------------------- */
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function genId(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function idOf(a,b){ return [a,b].sort().join('__'); }
+function hashColor(s){ let h=0; s=String(s); for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))>>>0; return PASTELS[h%PASTELS.length]; }
+function fmtTime(t){ const d=new Date(t); return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }
+function timeAgo(t){ if(!t) return ''; const s=Math.floor((Date.now()-t)/1000); if(s<60) return '방금'; const m=Math.floor(s/60); if(m<60) return `${m}분 전`; const h=Math.floor(m/60); if(h<24) return `${h}시간 전`; return `${Math.floor(h/24)}일 전`; }
+function loadMe(){ try{ return JSON.parse(localStorage.getItem(LS_KEY)); }catch{ return null; } }
+function saveMe(m){ localStorage.setItem(LS_KEY, JSON.stringify(m)); }
+function clearMe(){ localStorage.removeItem(LS_KEY); }
+function isConfigured(){ const c=firebaseConfig; return c && c.databaseURL && !c.databaseURL.includes('여기'); }
+function memberList(c){ const m=c.members; if(Array.isArray(m)) return m.filter(Boolean); if(m&&typeof m==='object') return Object.values(m).filter(Boolean); return []; }
+function myConvs(){ return Object.values(S.convs).filter(c => c && memberList(c).includes(S.me.id)); }
+function otherOf(c){ const oid=memberList(c).find(x => x!==S.me.id); return { id:oid, profile:S.profiles[oid]||null }; }
+function convTitle(c){ return c.type==='group' ? (c.name||'단체방') : (otherOf(c).profile?.name || '알 수 없음'); }
+function convEmoji(c){ return c.type==='group' ? '👥' : (otherOf(c).profile?.emoji || '·'); }
+function incomingCount(){ if(!S.me) return 0; return myConvs().filter(c => c.status==='pending' && c.requestedBy!==S.me.id).length; }
+
+/* ------------------------------ actions ------------------------------ */
+async function createProfile(name, emoji, status){
+  const id = 'u'+genId();
+  const m = { id, name:name.trim(), emoji, status:(status||'').trim() };
+  saveMe(m); S.me = m; S.view = 'list';
+  await set(ref(db,'profiles/'+id), { ...m, updatedAt:Date.now() });
+  closeSheet(); renderScreen();
+}
+async function saveProfile(name, emoji, status){
+  const m = { ...S.me, name:name.trim(), emoji, status:(status||'').trim() };
+  saveMe(m); S.me = m;
+  await set(ref(db,'profiles/'+m.id), { ...m, updatedAt:Date.now() });
+  closeSheet(); renderScreen();
+}
+async function resetProfile(){
+  if(S.me) await remove(ref(db,'profiles/'+S.me.id));
+  clearMe(); S.me=null; S.convs={}; selectedEmoji='😀'; S.view='list';
+  closeSheet(); renderScreen();
+}
+async function requestChat(targetId){
+  const cid = idOf(S.me.id, targetId);
+  if(S.convs[cid]) return;
+  await set(ref(db,'conversations/'+cid), { id:cid, type:'dm', members:[S.me.id,targetId], status:'pending', requestedBy:S.me.id, createdAt:Date.now(), lastT:Date.now(), lastText:'' });
+}
+async function acceptReq(cid){ await update(ref(db,'conversations/'+cid), { status:'accepted', lastT:Date.now() }); }
+async function declineReq(cid){ await remove(ref(db,'conversations/'+cid)); await remove(ref(db,'messages/'+cid)); }
+
+async function createGroup(){
+  const name = (document.getElementById('g-name')?.value||'').trim() || '단체방';
+  const ids = [...groupSel]; if(!ids.length) return;
+  const cid = 'g'+genId();
+  const members = [S.me.id, ...ids];
+  const t = Date.now();
+  const conv = { id:cid, type:'group', name, members, owner:S.me.id, status:'accepted', createdAt:t, lastT:t, lastText:'' };
+  S.convs[cid] = conv;                              // optimistic
+  await set(ref(db,'conversations/'+cid), conv);
+  await push(ref(db,'messages/'+cid), { from:SYS, text:`${S.me.name}님이 '${name}' 방을 만들었습니다.`, t });
+  closeSheet(); openChat(cid);
+}
+
+async function leaveRoom(){
+  const cid = S.activeId; const c = S.convs[cid]; if(!c) { goList(); return; }
+  const rest = memberList(c).filter(x => x!==S.me.id);
+  if(c.type==='group' && rest.length >= 1){
+    const t = Date.now();
+    await push(ref(db,'messages/'+cid), { from:SYS, text:`${S.me.name}님이 나갔습니다.`, t });
+    await update(ref(db,'conversations/'+cid), { members:rest, lastT:t, lastText:`${S.me.name}님이 나갔습니다.` });
+  } else {
+    await remove(ref(db,'conversations/'+cid));
+    await remove(ref(db,'messages/'+cid));
+  }
+  goList();
+}
+
+function openChat(cid){
+  if(msgUnsub){ msgUnsub(); msgUnsub=null; }
+  S.activeId=cid; S.messages=[]; S.delOpen=null; S.view='chat';
+  renderScreen();
+  resetUnread(cid);
+  msgUnsub = onValue(ref(db,'messages/'+cid), snap => {
+    const v = snap.val()||{};
+    S.messages = Object.keys(v).map(k => ({ id:k, ...v[k] })).sort((a,b)=>(a.t||0)-(b.t||0));
+    renderMessages(); scrollDocEnd(); resetUnread(cid);
+  });
+}
+function resetUnread(cid){
+  const c = S.convs[cid];
+  if(c && c.unread && c.unread[S.me.id]) update(ref(db,'conversations/'+cid), { ['unread/'+S.me.id]: 0 });
+}
+function goList(){ if(msgUnsub){ msgUnsub(); msgUnsub=null; } S.activeId=null; S.messages=[]; S.delOpen=null; S.view='list'; renderScreen(); }
+
+async function sendMessage(){
+  const ta = document.getElementById('composer-input'); if(!ta) return;
+  const text = ta.value.trim(); if(!text) return;
+  const cid = S.activeId; if(!cid) return;
+  ta.value=''; ta.style.height='auto'; ta.focus();
+  const t = Date.now();
+  await push(ref(db,'messages/'+cid), { from:S.me.id, text, t });
+  const upd = { lastT:t, lastText:text };
+  const c = S.convs[cid];
+  if(c) for(const uid of memberList(c)) if(uid!==S.me.id) upd['unread/'+uid] = increment(1);
+  await update(ref(db,'conversations/'+cid), upd);
+}
+async function deleteMsg(mid){
+  const cid = S.activeId; if(!cid) return;
+  S.delOpen = null;
+  await remove(ref(db,'messages/'+cid+'/'+mid));
+}
+function toggleMsg(mid){ S.delOpen = (S.delOpen===mid) ? null : mid; renderMessages(); }
+
+function submitProfile(){
+  const name=(document.getElementById('f-name')?.value||'').trim();
+  const status=(document.getElementById('f-status')?.value||'').trim();
+  if(!name) return;
+  if(S.me) saveProfile(name, selectedEmoji, status); else createProfile(name, selectedEmoji, status);
+}
+function pickEmoji(em){
+  selectedEmoji = em;
+  document.querySelectorAll('.emoji').forEach(x => x.classList.toggle('sel', x.dataset.emoji===em));
+  const av = document.getElementById('form-avatar'); if(av) av.textContent = em;
+}
+
+/* ----------------------------- dialogs ------------------------------- */
+function dialog(title, body, closeable){
+  const x = closeable ? `<span class="dlg-x" data-action="closeSheet">✕</span>` : '';
+  return `<div class="dlg-bg" ${closeable?'data-action="closeSheet"':''}><div class="dlg"><div class="dlg-title">${esc(title)}${x}</div><div class="dlg-body">${body}</div></div></div>`;
+}
+function openProfileDialog(isEdit){
+  selectedEmoji = isEdit ? S.me.emoji : (selectedEmoji||'😀');
+  document.getElementById('overlay').innerHTML = dialog('사용자 정보', formHTML(), isEdit);
+  setTimeout(()=>document.getElementById('f-name')?.focus(), 30);
+}
+function openGroupDialog(){
+  groupSel = new Set();
+  const others = Object.values(S.profiles).filter(p => p && p.id!==S.me.id);
+  const checks = others.length
+    ? others.map(p => `<div class="gp" data-action="toggleGp" data-id="${p.id}"><span class="gp-emo">${esc(p.emoji)}</span> ${esc(p.name)}<span class="gp-check">✓</span></div>`).join('')
+    : `<p class="dim" style="padding:8px;color:#9a9a9a">아직 추가할 사람이 없어요.</p>`;
+  const body = `<div class="form">
+    <div><p class="label">방 이름</p><input id="g-name" class="field" maxlength="20" placeholder="예: 스터디, 우리반"></div>
+    <div><p class="label">멤버 선택 <span class="opt">· 한 명 이상</span></p><div class="gp-list">${checks}</div></div>
+    <button class="ok-btn" data-action="createGroup">만들기</button>
+  </div>`;
+  document.getElementById('overlay').innerHTML = dialog('단체방 만들기', body, true);
+}
+function closeSheet(){ document.getElementById('overlay').innerHTML=''; }
+function openMembersDialog(){
+  const c = S.convs[S.activeId]; if(!c) return;
+  const members = memberList(c);
+  const rows = members.map(uid => {
+    const p = S.profiles[uid];
+    let tags = '';
+    if(uid===c.owner) tags += `<span class="mtag">방장</span>`;
+    if(uid===S.me.id) tags += `<span class="mtag me">나</span>`;
+    return `<div class="gp" style="cursor:default"><span class="gp-emo">${esc(p?.emoji||'·')}</span> <span>${esc(p?.name||'알 수 없음')}</span>${tags}</div>`;
+  }).join('');
+  const title = `${c.name||'단체방'} · 멤버 ${members.length}명`;
+  const body = `<div class="gp-list" style="max-height:300px">${rows}</div>
+    <button class="ok-btn" data-action="invite" style="margin-top:14px;background:#eef4fd;color:#1a73e8">＋ 멤버 추가</button>`;
+  document.getElementById('overlay').innerHTML = dialog(title, body, true);
+}
+function openInviteDialog(){
+  const c = S.convs[S.activeId]; if(!c || c.type!=='group') return;
+  const current = new Set(memberList(c));
+  const candidates = Object.values(S.profiles).filter(p => p && !current.has(p.id));
+  groupSel = new Set();
+  const checks = candidates.length
+    ? candidates.map(p => `<div class="gp" data-action="toggleGp" data-id="${p.id}"><span class="gp-emo">${esc(p.emoji)}</span> ${esc(p.name)}<span class="gp-check">✓</span></div>`).join('')
+    : `<p class="dim" style="padding:8px;color:#9a9a9a">추가할 수 있는 사람이 없어요.</p>`;
+  const body = `<div class="form"><div><p class="label">추가할 사람 <span class="opt">· 한 명 이상</span></p><div class="gp-list">${checks}</div></div><button class="ok-btn" data-action="addMembers">추가</button></div>`;
+  document.getElementById('overlay').innerHTML = dialog(`${c.name||'단체방'} · 멤버 추가`, body, true);
+}
+async function addMembers(){
+  const cid = S.activeId; const c = S.convs[cid]; if(!c) return;
+  const ids = [...groupSel]; if(!ids.length) return;
+  const merged = [...new Set([...memberList(c), ...ids])];
+  const names = ids.map(id => S.profiles[id]?.name || '알 수 없음').join(', ');
+  const t = Date.now();
+  S.convs[cid].members = merged;                       // optimistic
+  await update(ref(db,'conversations/'+cid), { members:merged, lastT:t, lastText:`${names}님이 들어왔습니다.` });
+  await push(ref(db,'messages/'+cid), { from:SYS, text:`${S.me.name}님이 ${names}님을 초대했습니다.`, t });
+  closeSheet();
+  const btn = document.querySelector('[data-action="members"]');
+  if(btn) btn.textContent = `멤버 ${merged.length}명 ▾`;
+}
+
+/* ------------------------------- icons ------------------------------- */
+const IC_NEW  = `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M5 2.5h6L15 6v11.5H5z"/><path d="M11 2.5V6h4"/></svg>`;
+const IC_OPEN = `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2.5 6a1 1 0 0 1 1-1h4l1.6 1.6H16a1 1 0 0 1 1 1v6.4a1 1 0 0 1-1 1H3.5a1 1 0 0 1-1-1z"/></svg>`;
+const IC_SAVE = `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3.5 3.5h10L17 7v9.5H3.5z"/><path d="M6.5 3.5v4h6v-4M6.5 16.5v-4h7v4"/></svg>`;
+const IC_PRINT= `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M6 7.5V3.5h8v4M6 15H4.5a1 1 0 0 1-1-1V9.5a1 1 0 0 1 1-1h11a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H14"/><path d="M6 12.5h8V17H6z"/></svg>`;
+const IC_UNDO = `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M7 7H3.5V3.5"/><path d="M3.8 7A7 7 0 1 1 3 11.5"/></svg>`;
+const IC_REDO = `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M13 7h3.5V3.5"/><path d="M16.2 7A7 7 0 1 0 17 11.5"/></svg>`;
+
+/* ------------------------------ chrome ------------------------------- */
+function menubarHTML(){
+  return `<div class="mbar">
+    <span class="m mfile" data-action="goList">파일</span>
+    <span class="m">편집</span><span class="m">보기</span><span class="m">입력</span>
+    <span class="m act">서식</span><span class="m">쪽</span><span class="m">보안</span>
+    <span class="m">검토</span><span class="m">도구</span><span class="m chev">⌄</span>
+  </div>`;
+}
+function ribbonHTML(){
+  return `<div class="ribbon">
+    <span class="cell on">바탕글</span><span class="cell">본문</span><span class="cell">개요 1</span><span class="cell">개요 2</span>
+    <span class="rsep"></span><span class="char">가<sub>가</sub></span><span class="rsep"></span>
+    <span class="ti">${IC_NEW}</span>
+    <button class="ti" data-action="goList" title="불러오기">${IC_OPEN}<span class="notif" id="folder-notif"></span></button>
+    <span class="ti">${IC_SAVE}</span><span class="ti">${IC_PRINT}</span>
+    <span class="rsep"></span><span class="ti">${IC_UNDO}</span><span class="ti">${IC_REDO}</span>
+    <span class="rsep"></span><span class="dd">대표 ▾</span><span class="dd wide">함초롬바탕 ▾</span><span class="dd">10.0 ▾</span>
+  </div>`;
+}
+function rulerHHTML(){ let c=''; for(let i=1;i<=24;i++) c+=`<span class="rk">${i}</span>`; return `<div class="ruler-h"><span class="corner"></span><span class="pad"></span>${c}</div>`; }
+function rulerVHTML(){ let n=''; for(let i=2;i<=15;i++) n+=`<span>${i}</span>`; return `<div class="ruler-v">${n}</div>`; }
+function shell(inner){
+  return `<div class="hwp">${menubarHTML()}${ribbonHTML()}${rulerHHTML()}<div class="work">${rulerVHTML()}<div class="canvas"><div class="page">${inner}</div></div></div></div>`;
+}
+
+/* ------------------------------ content ------------------------------ */
+function formHTML(){
+  const init = S.me;
+  return `<div class="form">
+    <div class="form-av-wrap"><div class="av" id="form-avatar" style="width:78px;height:78px;font-size:38px;background:${hashColor(init?init.id:'preview')}">${esc(selectedEmoji)}</div></div>
+    <div><p class="label">이모지</p><div class="emoji-grid">${EMOJIS.map(e=>`<button class="emoji ${e===selectedEmoji?'sel':''}" data-action="pickEmoji" data-emoji="${e}">${e}</button>`).join('')}</div></div>
+    <div><p class="label">이름</p><input id="f-name" class="field" maxlength="16" placeholder="화면에 보일 이름" value="${esc(init?.name||'')}"></div>
+    <div><p class="label">상태 메시지 <span class="opt">· 선택</span></p><input id="f-status" class="field" maxlength="40" placeholder="한 줄 소개" value="${esc(init?.status||'')}"></div>
+    <button class="ok-btn" data-action="submitProfile">${init?'저장':'시작'}</button>
+    ${init?`<button class="reset-link" data-action="resetProfile">프로필 삭제하고 처음부터</button>`:''}
+  </div>`;
+}
+function setupContent(){
+  return `<div class="setup"><h2>⚙️ databaseURL 만 넣으면 됩니다</h2>
+    <p>이 파일을 텍스트 편집기로 열고 위쪽 <code>firebaseConfig</code> 의 <code>databaseURL</code> 에 주소를 붙여넣은 뒤 저장·새로고침하세요.</p>
+    <ol><li>Firebase 콘솔 → <b>빌드 → Realtime Database</b></li><li><b>데이터베이스 만들기</b> → 테스트 모드</li><li>맨 위 URL 복사</li><li><code>databaseURL</code> 에 붙여넣기 → 저장 → 새로고침</li></ol></div>`;
+}
+function listDoc(){
+  const others = Object.values(S.profiles).filter(p => p && p.id!==S.me.id);
+  const mine = myConvs();
+  const incoming = mine.filter(c => c.status==='pending' && c.requestedBy!==S.me.id);
+  const accepted = mine.filter(c => c.status==='accepted').sort((a,b)=>(b.lastT||0)-(a.lastT||0));
+
+  let h = `<div class="doc list-doc">`;
+  h += `<p class="dh">［ 내 정보 ］</p>`;
+  h += `<p class="dl"><span class="emo">${esc(S.me.emoji)}</span> <b>${esc(S.me.name)}</b>${S.me.status?` <span class="dim">— ${esc(S.me.status)}</span>`:''} <button class="mini" data-action="editProfile">수정</button></p>`;
+
+  h += `<p class="dh">［ 문서 목록 ］</p>`;
+  if(!accepted.length){ h += `<p class="dl dim">— 열려 있는 문서가 없습니다.</p>`; }
+  else for(const c of accepted){
+    const meta = c.type==='group' ? `<span class="dim">멤버 ${memberList(c).length}</span>` : '';
+    const u = c.unread?.[S.me.id] || 0;
+    const badge = u>0 ? `<span class="unread">${u>99?'99+':u}</span>` : '';
+    const nameCls = u>0 ? 'bold-new' : '';
+    h += `<p class="dl row-open" data-action="open" data-id="${c.id}"><span class="emo">${esc(convEmoji(c))}</span> <b class="${nameCls}">${esc(convTitle(c))}</b> ${meta} <span class="dim leader">${esc(c.lastText||'…')}</span> ${badge}<span class="dim t">${timeAgo(c.lastT)}</span></p>`;
+  }
+
+  if(incoming.length){
+    h += `<p class="dh">［ 받은 공유 요청 ］</p>`;
+    for(const c of incoming){ const o=otherOf(c);
+      h += `<p class="dl"><span class="emo">${esc(o.profile?.emoji||'·')}</span> <b>${esc(o.profile?.name||'알 수 없음')}</b> <button class="mini ok" data-action="accept" data-id="${c.id}">수락</button> <button class="mini" data-action="decline" data-id="${c.id}">거절</button></p>`;
+    }
+  }
+
+  h += `<p class="dh">［ 새 문서 · 사람 찾기 ］ <button class="mini" data-action="newGroup">＋ 단체방</button></p>`;
+  const rows = [];
+  for(const p of others){
+    const c = S.convs[idOf(S.me.id, p.id)];
+    if(c && c.status==='accepted') continue;            // 이미 문서목록에
+    if(c && c.status==='pending' && c.requestedBy!==S.me.id) continue;  // 받은요청에
+    const act = (c && c.requestedBy===S.me.id) ? `<span class="dim">신청함</span>` : `<button class="mini" data-action="request" data-id="${p.id}">대화 신청</button>`;
+    rows.push(`<p class="dl"><span class="emo">${esc(p.emoji)}</span> <b>${esc(p.name)}</b>${p.status?` <span class="dim">— ${esc(p.status)}</span>`:''} ${act}</p>`);
+  }
+  h += rows.length ? rows.join('') : `<p class="dl dim">— 링크를 공유해 친구를 초대해 보세요.</p>`;
+  h += `</div>`;
+  return h;
+}
+function chatDoc(){
+  const c = S.convs[S.activeId]; if(!c) return listDoc();
+  const memInfo = c.type==='group' ? `<button class="mini" data-action="members">멤버 ${memberList(c).length}명 ▾</button>` : '';
+  const head = `<p class="doc-head"><span class="dim">📄</span> ${esc(convTitle(c))} ${memInfo} <button class="mini" data-action="leave">나가기</button></p>`;
+  const input = c.status==='accepted'
+    ? `<div class="line input-line"><span class="ln-name">${esc(S.me.name)}:</span><textarea id="composer-input" class="ln-input" rows="1"></textarea></div>`
+    : `<p class="dl dim" style="font-family:'함초롬바탕',serif">— 상대가 수락하면 작성할 수 있습니다.</p>`;
+  return `<div class="doc">${head}<div id="doc-lines"></div>${input}<div id="doc-end"></div></div>`;
+}
+
+/* ------------------------------ rendering ---------------------------- */
+function renderMessages(){
+  const box = document.getElementById('doc-lines'); if(!box) return;
+  const c = S.convs[S.activeId]; const other = c ? otherOf(c) : { profile:null };
+  let html='', lastDay=null;
+  for(const m of S.messages){
+    if(m.from===SYS){ html += `<p class="sysline">— ${esc(m.text)} —</p>`; lastDay=null; continue; }
+    const day = new Date(m.t).toDateString();
+    if(day!==lastDay){ const d=new Date(m.t); html += `<p class="daterow">${d.getFullYear()}. ${d.getMonth()+1}. ${d.getDate()}.</p>`; lastDay=day; }
+    const mine = m.from===S.me.id;
+    const name = mine ? S.me.name : (S.profiles[m.from]?.name || other.profile?.name || '상대');
+    const open = S.delOpen===m.id;
+    const del = mine ? `<span class="del${open?' open':''}" data-action="delmsg" data-mid="${m.id}">✕ 삭제</span>` : '';
+    const act = mine ? `data-action="togglemsg" data-mid="${m.id}"` : '';
+    html += `<div class="line${mine?' mine':''}${open?' sel':''}" ${act}><span class="ln-name">${esc(name)}:</span><span class="ln-text">${esc(m.text)}</span><span class="ln-time">${fmtTime(m.t)}</span>${del}</div>`;
+  }
+  box.innerHTML = html;
+}
+function scrollDocEnd(){ document.getElementById('doc-end')?.scrollIntoView({ block:'end' }); }
+function setupComposer(){
+  const ta = document.getElementById('composer-input'); if(!ta) return;
+  const grow = () => { ta.style.height='auto'; ta.style.height=ta.scrollHeight+'px'; };
+  ta.addEventListener('input', grow);
+  ta.addEventListener('keydown', e => { if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(); } });
+  grow(); ta.focus();
+}
+function totalUnread(){ if(!S.me) return 0; return myConvs().reduce((s,c)=> s + (c.unread?.[S.me.id]||0), 0); }
+function updateFolderDot(){
+  const d=document.getElementById('folder-notif'); if(!d) return;
+  const n = totalUnread() + incomingCount();
+  if(n>0){ d.textContent = n>99?'99+':String(n); d.style.display='block'; } else { d.style.display='none'; }
+}
+function renderScreen(){
+  const app = document.getElementById('app');
+  if(!S.ready){ app.innerHTML = shell(setupContent()); return; }
+  let inner;
+  if(!S.me) inner = `<div class="doc"><p class="line"><span class="ln-text" style="color:#bbb">　</span></p></div>`;
+  else if(S.view==='chat') inner = chatDoc();
+  else inner = listDoc();
+  app.innerHTML = shell(inner);
+  if(!S.me){ openProfileDialog(false); return; }
+  if(S.view==='chat'){ renderMessages(); setupComposer(); scrollDocEnd(); }
+  updateFolderDot();
+}
+
+/* ------------------------------ boss key ----------------------------- */
+function showBoss(){
+  S.boss = true;
+  const el = document.getElementById('boss');
+  el.innerHTML = shell(`<div class="doc"><textarea id="boss-input" class="blankdoc" spellcheck="false"></textarea></div>`);
+  const ta = document.getElementById('boss-input');
+  if(ta){ ta.value = bossText; ta.addEventListener('input', () => { bossText = ta.value; }); ta.focus(); }
+}
+function hideBoss(){
+  S.boss = false;
+  document.getElementById('boss').innerHTML = '';
+  if(S.view==='chat') document.getElementById('composer-input')?.focus();
+}
+function toggleBoss(){ if(S.boss) hideBoss(); else showBoss(); }
+
+document.addEventListener('keydown', e => {
+  if(e.key==='Escape'){ e.preventDefault(); toggleBoss(); }
+});
+
+/* --------------------------- event delegation ------------------------ */
+document.addEventListener('click', e => {
+  if(S.boss) return;
+  const el = e.target.closest('[data-action]'); if(!el) return;
+  const a = el.dataset.action;
+  if(a==='closeSheet'){ if(e.target.closest('.dlg')) return; closeSheet(); return; }
+  const id = el.dataset.id, mid = el.dataset.mid;
+  switch(a){
+    case 'goList': goList(); break;
+    case 'open': openChat(id); break;
+    case 'request': requestChat(id); break;
+    case 'accept': acceptReq(id); break;
+    case 'decline': declineReq(id); break;
+    case 'leave': leaveRoom(); break;
+    case 'members': openMembersDialog(); break;
+    case 'invite': openInviteDialog(); break;
+    case 'addMembers': addMembers(); break;
+    case 'togglemsg': toggleMsg(mid); break;
+    case 'delmsg': deleteMsg(mid); break;
+    case 'newGroup': openGroupDialog(); break;
+    case 'toggleGp': if(groupSel.has(id)) groupSel.delete(id); else groupSel.add(id); el.classList.toggle('on'); break;
+    case 'createGroup': createGroup(); break;
+    case 'editProfile': openProfileDialog(true); break;
+    case 'submitProfile': submitProfile(); break;
+    case 'resetProfile': resetProfile(); break;
+    case 'pickEmoji': pickEmoji(el.dataset.emoji); break;
+    case 'send': sendMessage(); break;
+  }
+});
+
+/* -------------------------------- boot ------------------------------- */
+if(isConfigured()){
+  try{
+    const app = initializeApp(firebaseConfig);
+    db = getDatabase(app);
+    S.ready = true;
+    S.me = loadMe();
+    if(S.me) set(ref(db,'profiles/'+S.me.id), { ...S.me, updatedAt:Date.now() });
+    onValue(ref(db,'profiles'), snap => { S.profiles = snap.val()||{}; if(S.me && S.view!=='chat') renderScreen(); });
+    onValue(ref(db,'conversations'), snap => {
+      S.convs = snap.val()||{};
+      if(S.me){
+        if(S.view==='chat'){ if(!S.convs[S.activeId]){ goList(); return; } }
+        else renderScreen();
+      }
+      updateFolderDot();
+    });
+  }catch(err){ console.error('Firebase init failed:', err); S.ready=false; }
+}
+renderScreen();
+</script>
+</body>
+</html>
